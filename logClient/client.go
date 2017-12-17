@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	npipe "gopkg.in/natefinch/npipe.v2"
 )
 
 func getTimeStr() string {
@@ -32,14 +34,21 @@ func getProcessName() string {
 	return fmt.Sprintf("<%v>", fileName)
 }
 
+func flushLog(logMsg string) {
+	switch ModeSetting {
+	case ModePipe:
+		conn, err := npipe.DialTimeout(`\\.\pipe\mypipename`, 1)
+		if err == nil {
+			fmt.Fprintln(conn, logMsg)
+		}
+	case ModePrint:
+		fmt.Println(logMsg)
+	}
+}
+
 // Log is to generate log string
 func Log(level LogLevel, format string, parameters ...interface{}) {
 	fmtTmp := fmt.Sprintf(format, parameters...)
 	logStr := strings.Join([]string{getTimeStr(), getProcessName(), getPIDStr(), level.toString(), fmtTmp, getFileNameLineStr()}, " ")
-	logStr += "\n"
-	switch ModeSetting {
-	case ModePipe:
-	case ModePrint:
-		fmt.Print(logStr)
-	}
+	flushLog(logStr)
 }
