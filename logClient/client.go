@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	npipe "gopkg.in/natefinch/npipe.v2"
+	winio "github.com/Microsoft/go-winio"
 )
 
 func getTimeStr() string {
@@ -37,7 +37,7 @@ func getProcessName() string {
 func flushLog(logMsg string) {
 	switch ModeSetting {
 	case ModePipe:
-		conn, err := npipe.DialTimeout(`\\.\pipe\mypipename`, 1)
+		conn, err := winio.DialPipe(`\\.\pipe\mypipename`, nil)
 		if err == nil {
 			fmt.Fprintln(conn, logMsg)
 		}

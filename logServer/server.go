@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"fmt"
 
-	npipe "gopkg.in/natefinch/npipe.v2"
+	winio "github.com/Microsoft/go-winio"
 )
 
 func main() {
-	ln, err := npipe.Listen(`\\.\pipe\mypipename`)
+	ln, err := winio.ListenPipe(`\\.\pipe\mypipename`, nil)
+	defer ln.Close()
 	if err != nil {
 		fmt.Println("open pipe error")
 	}
