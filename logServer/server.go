@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net"
 
 	winio "github.com/Microsoft/go-winio"
 )
@@ -21,14 +22,14 @@ type jobStruct struct {
 	message    string
 }
 
-func pipeReceiver(c chan jobStruct) {
-	ln, err := winio.ListenPipe(`\\.\pipe\mypipename`, nil)
-	defer ln.Close()
-	if err != nil {
-		fmt.Println("open pipe error")
-	}
+func openPipeServer() (listener net.Listener, err error) {
+	listener, err = winio.ListenPipe(`\\.\pipe\mypipename`, nil)
+	return
+}
+
+func pipeReceiver(c chan jobStruct, listener net.Listener) {
 	for {
-		conn, err := ln.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println(err)
 			c <- jobStruct{jobCommand: cmdExit, message: ""}
@@ -58,6 +59,10 @@ func worker(c chan jobStruct) {
 
 func main() {
 	c := make(chan jobStruct, 300)
-	go pipeReceiver(c)
+	ln, err := openPipeServer()
+	if err != nil {
+		fmt.Println(err)
+	}
+	go pipeReceiver(c, ln)
 	worker(c)
 }
