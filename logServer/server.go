@@ -7,7 +7,21 @@ import (
 	winio "github.com/Microsoft/go-winio"
 )
 
-func main() {
+type command int
+
+const (
+	cmdFlush command = iota
+	cmdMessage
+	cmdSplit
+	cmdExit
+)
+
+type jobStruct struct {
+	jobCommand command
+	message    string
+}
+
+func pipeReceiver(c chan jobStruct) {
 	ln, err := winio.ListenPipe(`\\.\pipe\mypipename`, nil)
 	defer ln.Close()
 	if err != nil {
@@ -16,11 +30,34 @@ func main() {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			// handle error
-			continue
+			fmt.Println(err)
+			c <- jobStruct{jobCommand: cmdExit, message: ""}
+			return
 		}
-
-		msg, _ := bufio.NewReader(conn).ReadString('\n')
-		fmt.Print(msg)
+		bufioReader := bufio.NewReader(conn)
+		msg, _ := bufioReader.ReadString('\n')
+		job := jobStruct{jobCommand: cmdMessage, message: msg}
+		c <- job
+		conn.Close()
 	}
+}
+
+func worker(c chan jobStruct) {
+	for {
+		job := <-c
+		switch job.jobCommand {
+		case cmdFlush:
+		case cmdMessage:
+			fmt.Print(job.message)
+		case cmdSplit:
+		case cmdExit:
+			break
+		}
+	}
+}
+
+func main() {
+	c := make(chan jobStruct, 300)
+	go pipeReceiver(c)
+	worker(c)
 }
