@@ -39,6 +39,7 @@ func flushLog(logMsg string) {
 	case ModePipe:
 		conn, err := winio.DialPipe(`\\.\pipe\mypipename`, nil)
 		if err == nil {
+			defer conn.Close()
 			fmt.Fprintln(conn, logMsg)
 		}
 	case ModePrint:
