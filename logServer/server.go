@@ -15,7 +15,7 @@ type command int
 
 const (
 	cmdFlush command = iota
-	cmdMessage
+	cmdEnqueue
 	cmdSplit
 	cmdExit
 )
@@ -78,7 +78,7 @@ func (server *LogServer) receiver() {
 			}
 			bufioReader := bufio.NewReader(conn)
 			msg, _ := bufioReader.ReadString('\n')
-			job := jobStruct{jobCommand: cmdMessage, message: msg}
+			job := jobStruct{jobCommand: cmdEnqueue, message: msg}
 			server.jobQueue <- job
 			conn.Close()
 		}
@@ -103,7 +103,7 @@ func (server *LogServer) worker() {
 		case job := <-server.jobQueue:
 			switch job.jobCommand {
 			case cmdFlush:
-			case cmdMessage:
+			case cmdEnqueue:
 				fmt.Print(job.message)
 			case cmdSplit:
 			}
