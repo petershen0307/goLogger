@@ -86,6 +86,7 @@ func (server *LogServer) receiver() {
 
 	// wait exit event
 	<-server.exitEvent
+	// to stop listener.Accept()
 	listener.Close()
 }
 
