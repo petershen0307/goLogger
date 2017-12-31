@@ -23,3 +23,5 @@
 > ```
  Base on [net.Listener document](https://golang.org/pkg/net/#Listener), net.Listener.Accept() will block the thread and wait for the connection. If we want to exist the program, we must need a mechanism that will stop net.Listener.Accept(). We can call **Listener.Close()** to unblock **Listener.Accept()** and get return errors.
 
+## Stop event to all goroutine
+### use close(stopChan)
