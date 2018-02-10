@@ -27,19 +27,19 @@ type jobStruct struct {
 
 // LogServer is the structure collecting log from pipe
 type LogServer struct {
-	pipeName  string
+	config    ServerSetting
 	jobQueue  chan jobStruct
 	wg        sync.WaitGroup
 	exitEvent chan struct{}
 }
 
 // Start is the LogServer entry function
-func (server *LogServer) Start(pipeName string) {
-	if pipeName == "" {
+func (server *LogServer) Start(configPath string) {
+	server.config.Init(configPath)
+	if server.config.PipeName == "" {
 		fmt.Println("empty pipe name")
 		return
 	}
-	server.pipeName = pipeName
 	// 1. pre work
 	workFuncs := []func(){server.receiver, server.worker}
 	server.wg.Add(len(workFuncs))
@@ -63,7 +63,7 @@ func (server *LogServer) Start(pipeName string) {
 
 func (server *LogServer) receiver() {
 	defer server.wg.Done()
-	listener, err := winio.ListenPipe(server.pipeName, nil)
+	listener, err := winio.ListenPipe(server.config.PipeName, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -104,8 +104,9 @@ func (server *LogServer) worker() {
 		case job := <-server.jobQueue:
 			switch job.jobCommand {
 			case cmdFlush:
-			case cmdEnqueue:
 				fmt.Print(job.message)
+			case cmdEnqueue:
+				server.jobQueue <- jobStruct{jobCommand: cmdFlush, message: job.message}
 			case cmdSplit:
 			}
 		}
