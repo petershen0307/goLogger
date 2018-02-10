@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	//testServer()
-	testConfiguration()
+	testServer()
+	//testConfiguration()
 }
 
 func testServer() {
 	s := logServer.LogServer{}
-	s.Start(`\\.\pipe\mypipename`)
+	s.Start("")
 }
 
 func testConfiguration() {

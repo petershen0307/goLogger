@@ -20,7 +20,9 @@ func main() {
 
 func testLog() {
 	//myLog.ModeSetting = myLog.ModePrint
-	myLog.Log(myLog.LevelDebug, "this is test %d, %s", 123, "hello")
+	for i := 0; i < 10; i++ {
+		myLog.Log(myLog.LevelDebug, "this is test %d, %s %v", 123, "hello", i)
+	}
 }
 
 func testExitSignal() {
