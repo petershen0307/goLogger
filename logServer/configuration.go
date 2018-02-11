@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // ServerSetting is the setting for log server
 type ServerSetting struct {
-	SplitSizeMB      uint
+	SplitSizeMB      int64
 	PipeName         string
-	FlushFrequencyMS uint
+	FlushFrequencyMS time.Duration
 	LogFileName      string
 	LogFileDir       string
 }
@@ -37,4 +38,10 @@ func (s *ServerSetting) Init(settingPath string) {
 	if err != nil {
 		fmt.Println("Decode setting error:", err)
 	}
+}
+
+// MB to byte, MS to nano second
+func (s *ServerSetting) normalizeValue() {
+	s.FlushFrequencyMS *= time.Millisecond
+	s.SplitSizeMB *= 1024 * 1024
 }
