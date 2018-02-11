@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	winio "github.com/Microsoft/go-winio"
 )
@@ -31,6 +32,7 @@ type LogServer struct {
 	jobQueue  chan jobStruct
 	wg        sync.WaitGroup
 	exitEvent chan struct{}
+	writer    LogWriter
 }
 
 // Start is the LogServer entry function
@@ -45,6 +47,7 @@ func (server *LogServer) Start(configPath string) {
 	server.wg.Add(len(workFuncs))
 	server.jobQueue = make(chan jobStruct, 300)
 	server.exitEvent = make(chan struct{})
+	server.writer.SetPath(server.config.LogFileDir, server.config.LogFileName)
 
 	osEvent := make(chan os.Signal, 1)
 	signal.Notify(osEvent, os.Interrupt)
@@ -101,13 +104,25 @@ func (server *LogServer) worker() {
 		select {
 		case <-server.exitEvent:
 			bExit = true
+		case <-time.Tick(time.Duration(server.config.FlushFrequencyMS) * time.Millisecond):
+			if server.writer.BufferSize() > 0 {
+				server.jobQueue <- jobStruct{jobCommand: cmdFlush}
+			}
 		case job := <-server.jobQueue:
 			switch job.jobCommand {
 			case cmdFlush:
-				fmt.Print(job.message)
+				fileSize := server.writer.Flush()
+				if fileSize != -1 && fileSize >= server.config.SplitSizeMB {
+					server.jobQueue <- jobStruct{jobCommand: cmdSplit}
+				}
 			case cmdEnqueue:
-				server.jobQueue <- jobStruct{jobCommand: cmdFlush, message: job.message}
+				server.writer.PushToBuffer(job.message)
+				// buffer size
+				if server.writer.BufferSize() >= 2048 {
+					server.jobQueue <- jobStruct{jobCommand: cmdFlush}
+				}
 			case cmdSplit:
+				server.writer.SplitFile()
 			}
 		}
 	}
