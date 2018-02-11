@@ -104,7 +104,7 @@ func (server *LogServer) worker() {
 		select {
 		case <-server.exitEvent:
 			bExit = true
-		case <-time.Tick(time.Duration(server.config.FlushFrequencyMS) * time.Millisecond):
+		case <-time.Tick(server.config.FlushFrequencyMS):
 			if server.writer.BufferSize() > 0 {
 				server.jobQueue <- jobStruct{jobCommand: cmdFlush}
 			}

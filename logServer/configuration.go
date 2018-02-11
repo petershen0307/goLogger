@@ -28,6 +28,7 @@ func (s *ServerSetting) Init(settingPath string) {
 		LogFileName:      "debug.log",
 		LogFileDir:       cwd,
 	}
+	defer s.normalizeValue()
 	// check file exist or not
 	if _, err := os.Stat(settingPath); os.IsNotExist(err) {
 		return
@@ -37,6 +38,7 @@ func (s *ServerSetting) Init(settingPath string) {
 	err := decoder.Decode(s)
 	if err != nil {
 		fmt.Println("Decode setting error:", err)
+		return
 	}
 }
 
