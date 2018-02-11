@@ -16,25 +16,36 @@ type LogWriter struct {
 	writeBuffer bytes.Buffer
 }
 
+// SetPath will set dir and file name
+func (w *LogWriter) SetPath(dir, fileName string) {
+	w.logFileDir, w.logFileName = dir, fileName
+}
+
 // BufferSize will get current buffer size
 func (w *LogWriter) BufferSize() int {
 	return w.writeBuffer.Len()
 }
 
-// Flush will flush buffer to file
-func (w *LogWriter) Flush() {
+// Flush will flush buffer to file and return file size
+func (w *LogWriter) Flush() int64 {
 	logFilePath := filepath.Join(w.logFileDir, w.logFileName)
 	file, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0777)
 	if err != nil {
 		fmt.Println("Open file:", logFilePath, " error:", err)
-		return
+		return -1
 	}
 	defer file.Close()
 	_, err = w.writeBuffer.WriteTo(file)
 	if err != nil {
 		fmt.Println("buffer WriteTo() error:", err)
-		return
+		return -1
 	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		fmt.Println("get file info error:", err)
+		return -1
+	}
+	return fileInfo.Size()
 }
 
 // PushToBuffer will push string to buffer
